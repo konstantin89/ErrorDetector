@@ -20,7 +20,7 @@
 
 #include "ThreadSafeQueue.hpp"
 #include "TerminateFlag.hpp"
-#include "AD9772_Comm.h"
+#include "../AD9772_Comm_Module/AD9772_Comm.h"
 
 
 #include <thread>

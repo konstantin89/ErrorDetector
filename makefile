@@ -4,36 +4,40 @@ CXX = g++
 CXX_FLAGS = -std=c++11 -Wall -Wextra -lwiringPi -lpthread
 DEBUG_FLAG = -DDEBUG=1
 
-AD9772_MAIN = AD9772_Comm_Main
-ERROR_DETECTOR_MAIN = errorDetector
-ERROR_DETECTOR_DEBUG = errorDetectorDebug
+#Derectory for object and ececutable files.
+OBJDIR = ./Executables/
 
-ALL_EXE = AD9772_Comm_Main errorDetector
+AD7992_DIR = ./AD9772_Comm_Module/
 
-all: $(AD9772_MAIN) $(ERROR_DETECTOR_MAIN)
+AD9772_MAIN = $(OBJDIR)AD9772_Comm_Main
+ERROR_DETECTOR_MAIN = $(OBJDIR)errorDetector
+
+ALL_EXE = $(OBJDIR)AD9772_Comm_Main $(OBJDIR)errorDetector
+
+all: $(OBJDIR)$(AD9772_MAIN) $(OBJDIR)$(ERROR_DETECTOR_MAIN)
 
 
-$(ERROR_DETECTOR_MAIN): A2D_Comm_I2C.o AD9772_Comm.o  errorDetector.o
-	$(CXX) $(CXX_FLAGS) A2D_Comm_I2C.o AD9772_Comm.o errorDetector.o -o $(ERROR_DETECTOR_MAIN)
+$(OBJDIR)$(ERROR_DETECTOR_MAIN): $(OBJDIR)A2D_Comm_I2C.o $(OBJDIR)AD9772_Comm.o $(OBJDIR)errorDetector.o
+	$(CXX) $(CXX_FLAGS) $^ -o $(OBJDIR)$(ERROR_DETECTOR_MAIN)
 
-$(AD9772_MAIN): A2D_Comm_I2C.o AD9772_Comm.o  AD9772_Comm_Main.cpp
-	$(CXX) $(CXX_FLAGS) A2D_Comm_I2C.o AD9772_Comm.o AD9772_Comm_Main.cpp \
-	-o $(AD9772_MAIN)
+$(OBJDIR)$(AD9772_MAIN): $(OBJDIR)A2D_Comm_I2C.o $(OBJDIR)AD9772_Comm.o  $(AD7992_DIR)AD9772_Comm_Main.cpp
+	$(CXX) $(CXX_FLAGS) $^ -o $(OBJDIR)$(AD9772_MAIN)
 
-errorDetector.o: errorDetector.cpp errorDetector.h
-	$(CXX) $(CXX_FLAGS) -c errorDetector.cpp
+$(OBJDIR)errorDetector.o: errorDetector.cpp errorDetector.h
+	$(CXX) $(CXX_FLAGS) -c $<
 
-AD9772_Comm.o: AD9772_Comm.h AD9772_Comm.cpp
-	$(CXX) $(CXX_FLAGS) -c AD9772_Comm.cpp
+$(OBJDIR)AD9772_Comm.o: AD9772_Comm.cpp AD9772_Comm.h 
+	$(CXX) $(CXX_FLAGS) -c $<
 
-A2D_Comm_I2C.o: A2D_Comm_I2C.cpp A2D_Comm_I2C.hpp A2D_Communication.hpp
-	$(CXX) $(CXX_FLAGS) -c A2D_Comm_I2C.cpp
+$(OBJDIR)A2D_Comm_I2C.o: $(AD7992_DIR)A2D_Comm_I2C.cpp $(AD7992_DIR)A2D_Comm_I2C.hpp \
+	                     $(AD7992_DIR)A2D_Communication.hpp
+	$(CXX) $(CXX_FLAGS) -I $(AD7992_DIR) -c $<
 
 # specify commands that are not files.
 .PHONY: clean
 
 #make clean
 clean:
-	rm -rf $(ALL_EXE) *.o
+	rm -rf $(ALL_EXE) $(OBJDIR)*.o
 
 
