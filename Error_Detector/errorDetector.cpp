@@ -397,7 +397,7 @@ void setSignalHandler()
 int main()
 {   
     
-    const char* fileNameX = "Samples_From_A2D";
+    const char* fileNameX = "../Samples_From_A2D";
 
     setSignalHandler();
 
