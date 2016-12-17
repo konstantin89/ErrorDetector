@@ -1,0 +1,5 @@
+*Paste all the debug pinting in to ifdef:
+
+#ifdef DEBUG
+	print("Some Data");
+#endif
