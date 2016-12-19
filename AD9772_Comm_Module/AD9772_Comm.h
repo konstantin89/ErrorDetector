@@ -43,6 +43,24 @@
 enum ConversRate{NOT_AUTO, Tx32, Tx64, Tx128, Tx256,
 	                    Tx512, Tx1024, Tx2048};
 
+/////////////////////////////////////////////////
+#define I2C_M_TEN           0x0010
+#define I2C_M_RD            0x0001
+#define I2C_M_NOSTART       0x4000
+#define I2C_M_REV_DIR_ADDR  0x2000
+#define I2C_M_IGNORE_NAK    0x1000
+#define I2C_M_NO_RD_ACK     0x0800
+#define I2C_M_RECV_LEN      0x0400
+
+struct i2c_msg {
+  __u16 addr;
+  __u16 flags;
+  __u16 len;
+  __u8 * buf;
+}; 
+
+/////////////////////////////////////////////////
+
 /*
 * 2 byte variable to hold the conversion
 * value from AD9772.
@@ -114,23 +132,36 @@ public:
 	int setAutoSampleMode(ConversRate rate);
 
 	/*
-	* Set AD9772 to high speen communication mode.
 	*
-	* @param: void.
 	*
-	* @return: SUCCESS or MY_ERROR.
+	*
 	*/
-	int setHighSpeedMode();
+	int setCommandMode(BYTE chanelToSample);
+
+	/*
+	*
+	*
+	*
+	*
+	*
+	*/
+	int readCommandMode(WCHAR &ch1Val, WCHAR &ch2Val, BYTE devAdr);
+
+	/*
+	*
+	*
+	*
+	*
+	*/
+	int readAutoMode(WCHAR &ch1Val, WCHAR &ch2Val, BYTE devAdr);
+		
 
 	/*
 	*
 	*
 	*
 	*/
-	int setCommandMode(BYTE chanelToSample);
-	
-	int signalCONVST();
-	
+	int parseIoctlBuffer(WCHAR &ch1Val, WCHAR &ch2Val, BYTE buf[]);
 
 };
 

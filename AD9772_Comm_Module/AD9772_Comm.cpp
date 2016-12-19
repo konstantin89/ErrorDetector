@@ -58,20 +58,6 @@ int AD9772_Comm::setAutoSampleMode(ConversRate rate)
 	return setControlRegister(CYCLE_TIMER_REGISTER, ConvertionRateMap[rate]);
 }
 
-int AD9772_Comm::setHighSpeedMode()
-{
-	int writeRetVal;
-	BYTE buf[1];
-
-	//High speed command: 00001XXX, 
-	//For AD9772-1 with AS=GRD we have XXX=011
-	//00001011 binary is 1+2+8 = 11
-	buf[0] = 11;
-	writeRetVal = writeData(buf, 1);
-
-	return writeRetVal;
-}
-
 int AD9772_Comm::setCommandMode(BYTE chanelToSample)
 {
 	int writeRetVal;
@@ -82,3 +68,110 @@ int AD9772_Comm::setCommandMode(BYTE chanelToSample)
 }
 
 
+int AD9772_Comm::readCommandMode(WCHAR &ch1Val, WCHAR &ch2Val, BYTE devAdr)
+{
+
+		ch1Val = 0;
+		ch2Val = 0;
+
+        struct i2c_rdwr_ioctl_data ioctlMsg;
+        struct i2c_msg msg [2];
+        
+        BYTE writeBuf[1];
+        BYTE readBuf [6];
+
+        writeBuf[0] = 0x30;
+        
+        msg[0].addr = devAdr;
+        msg[0].flags = 0; //write
+        msg[0].len = 1;
+        msg[0].buf = writeBuf;
+        
+        msg[1].addr = devAdr;
+        msg[1].flags = 1; //?read?
+        msg[1].len = 6;
+        msg[1].buf = readBuf;
+        
+        ioctlMsg.msgs = msg;
+        ioctlMsg.nmsgs = 2;
+        
+        int deviceDescriptor = getDesc();
+
+        if(ioctl(deviceDescriptor ,  I2C_RDWR, &ioctlMsg) < SUCCESS)
+        {
+          std::cout << "ioctl failed" << std::endl;
+          return MY_ERROR;
+        }
+
+        if(parseIoctlBuffer(ch1Val, ch2Val, readBuf) == MY_ERROR)
+    	{
+    		return MY_ERROR;
+    	}
+    	return SUCCESS;
+}
+
+
+
+
+int AD9772_Comm::readAutoMode(WCHAR &ch1Val, WCHAR &ch2Val, BYTE devAdr)
+{
+	ch1Val = 0;
+	ch2Val = 0;
+
+	struct i2c_rdwr_ioctl_data ioctlMsg;
+    struct i2c_msg msg [2];
+    
+    BYTE readBuf [6];
+    
+    msg [0].addr = devAdr;
+    msg [0].flags = I2C_M_RD;
+    msg [0].len = 6;
+    msg [0].buf = readBuf;
+
+    ioctlMsg.msgs = msg;
+    ioctlMsg.nmsgs = 1;
+    
+    int deviceDescriptor = getDesc();
+
+    if(ioctl(deviceDescriptor ,  I2C_RDWR, &ioctlMsg) < SUCCESS)
+    {
+      std::cout << "ioctl failed" << std::endl;
+      return MY_ERROR;
+    }
+
+    if(parseIoctlBuffer(ch1Val, ch2Val, readBuf) == MY_ERROR)
+    {
+    	return MY_ERROR;
+    }
+    return SUCCESS;
+}
+
+int parseIoctlBuffer(WCHAR &ch1Val, WCHAR &ch2Val, BYTE buf[6])
+{
+	if((16 & buf[0]) % 15 == CHANEL_1 && (16 & buf[2]) % 15 == CHANEL_2)
+    {
+    	ch1Val = buf[1] + (buf[0] & 0x0f) * 256;
+    	ch2Val = buf[3] + (buf[2] & 0x0f) * 256;
+    }
+    else if((16 & buf[0]) % 15 == CHANEL_2 && (16 & buf[2]) % 15 == CHANEL_1)
+    {
+    	ch1Val = buf[3] + (buf[2] & 0x0f) * 256;
+    	ch2Val = buf[1] + (buf[0] & 0x0f) * 256;
+    }
+
+    else if((16 & buf[0]) % 15 == CHANEL_1 && (16 & buf[5]) % 15 == CHANEL_2)
+    {
+    	ch1Val = buf[1] + (buf[0] & 0x0f) * 256;
+    	ch2Val = buf[5] + (buf[4] & 0x0f) * 256;
+    }
+    else if((16 & buf[0]) % 15 == CHANEL_2 && (16 & buf[5]) % 15 == CHANEL_1)
+    {
+    	ch2Val = buf[1] + (buf[0] & 0x0f) * 256;
+    	ch1Val = buf[5] + (buf[4] & 0x0f) * 256;
+    }
+    else
+    {
+    	return MY_ERROR;
+    }
+    return SUCCESS;
+}

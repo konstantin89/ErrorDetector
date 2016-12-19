@@ -75,6 +75,11 @@ public:
 	*/
 	virtual int writeData(BYTE* buff, UINT bytesToRead) = 0; 
 
+	int getDesc()
+	{
+		return _fileDescriptor;
+	}
+
 
 protected:
 
