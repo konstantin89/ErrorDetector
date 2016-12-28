@@ -72,7 +72,7 @@ void autoSamplingMode()
     WCHAR ch1Val, ch2Val;
     while(TERMINATION_FLAG == false)
     {
-        timeSampleTaken = std::chrono::steady_clock::now();
+         std::chrono::steady_clock::time_point timeSampleTaken = std::chrono::steady_clock::now();
 
         if(ad7992Comm.readAutoMode(ch1Val, ch2Val, ADDRESS_AS_GND) == MY_ERROR)
         {

@@ -146,7 +146,7 @@ int AD9772_Comm::readAutoMode(WCHAR &ch1Val, WCHAR &ch2Val, BYTE devAdr)
     return SUCCESS;
 }
 
-int parseIoctlBuffer(WCHAR &ch1Val, WCHAR &ch2Val, BYTE buf[6])
+int AD9772_Comm::parseIoctlBuffer(WCHAR &ch1Val, WCHAR &ch2Val, BYTE buf[6])
 {
 	if((16 & buf[0]) % 15 == CHANEL_1 && (16 & buf[2]) % 15 == CHANEL_2)
     {

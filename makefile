@@ -20,7 +20,8 @@ ERROR_DETECTOR_MAIN = $(OBJDIR)errorDetector
 all: $(AD9772_MAIN) $(ERROR_DETECTOR_MAIN)
 
 
-$(ERROR_DETECTOR_MAIN): $(OBJDIR)A2D_Comm_I2C.o $(OBJDIR)AD9772_Comm.o $(OBJDIR)errorDetector.o
+$(ERROR_DETECTOR_MAIN): $(OBJDIR)A2D_Comm_I2C.o $(OBJDIR)AD9772_Comm.o $(OBJDIR)errorDetector.o\
+		        $(ERR_DET_DIR)Sample.h
 	$(CXX) $(CXX_FLAGS) $^ -o $@
 
 $(AD9772_MAIN): $(OBJDIR)A2D_Comm_I2C.o $(OBJDIR)AD9772_Comm.o  $(AD7992_DIR)AD9772_Comm_Main.cpp
