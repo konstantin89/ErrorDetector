@@ -146,6 +146,10 @@ int AD9772_Comm::readAutoMode(WCHAR &ch1Val, WCHAR &ch2Val, BYTE devAdr)
     return SUCCESS;
 }
 
+/*
+*
+*
+*/
 int AD9772_Comm::parseIoctlBuffer(WCHAR &ch1Val, WCHAR &ch2Val, BYTE buf[6])
 {
 	if((16 & buf[0]) % 15 == CHANEL_1 && (16 & buf[2]) % 15 == CHANEL_2)
@@ -159,12 +163,12 @@ int AD9772_Comm::parseIoctlBuffer(WCHAR &ch1Val, WCHAR &ch2Val, BYTE buf[6])
     	ch2Val = buf[1] + (buf[0] & 0x0f) * 256;
     }
 
-    else if((16 & buf[0]) % 15 == CHANEL_1 && (16 & buf[5]) % 15 == CHANEL_2)
+    else if((16 & buf[0]) % 15 == CHANEL_1 && (16 & buf[4]) % 15 == CHANEL_2)
     {
     	ch1Val = buf[1] + (buf[0] & 0x0f) * 256;
     	ch2Val = buf[5] + (buf[4] & 0x0f) * 256;
     }
-    else if((16 & buf[0]) % 15 == CHANEL_2 && (16 & buf[5]) % 15 == CHANEL_1)
+    else if((16 & buf[0]) % 15 == CHANEL_2 && (16 & buf[4]) % 15 == CHANEL_1)
     {
     	ch2Val = buf[1] + (buf[0] & 0x0f) * 256;
     	ch1Val = buf[5] + (buf[4] & 0x0f) * 256;

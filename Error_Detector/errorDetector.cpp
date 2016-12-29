@@ -79,11 +79,12 @@ void autoSamplingMode()
             sampleCount++;
             print_debug(ch1Val, 0);
             print_debug(ch2Val, 1);
+                    std::string sampleStr = std::to_string(ch1Val) + 
+                                " " + std::to_string(ch2Val);
+            gRawDataForFileWriting.push(sampleStr);
         }
 
-        std::string sampleStr = std::to_string(ch1Val) + 
-                                " " + std::to_string(ch2Val);
-        gRawDataForFileWriting.push(sampleStr);
+
 	}
     return;
 }
@@ -307,7 +308,7 @@ void setSignalHandler()
 int main()
 {   
     
-    const char* fileNameX = "../Samples_From_A2D";
+    const char* fileNameX = "./Samples_From_A2D";
 
     setSignalHandler();
 

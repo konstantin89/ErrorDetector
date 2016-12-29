@@ -4,12 +4,7 @@
 *
 * @date: 19\12\2016
 *
-* @brief: Minimal code for interfacing with AD7992 that
-*         used to know the maximum sample reading rate.
-*
-*         The code contains long functions that made with 
-*         bad coding style that used only to find the 
-*         maximum possible reading rate of samples from AD7992.
+* @brief: 
 *
 *****************************************************************/
 
@@ -21,7 +16,7 @@
 
 /**************** Defines for AD7992 device  *******************/
 // Flag for debugging.
-#define DEBUG 0
+#define DEBUG 1
 
 // Print samples to standard output for debugging. 
 #define print_debug(val, chanel)\
@@ -39,145 +34,123 @@
 #define RESULT_MASK  0xfff 
 
 
-/*
-* Function that used to run AD7992 device in command
-* mode and read samples from it.
-*
-* The function made to count the sample per second rate
-* of the device when running the minimum needed code.
-* 
-* This test used to chech how the error detector application
-* reading rate is close to the optimal rate that is counted
-* in this program.
-*
-*/
-int commandModeTwoCh();
+void commandMode_AD7992(int sampleDelay);
+void autoMode_AD7992(int sampleDelay);
 
 
 int main()
 {
-	commandModeTwoCh();
+	int sampleDelay = 0;
+
+	std::cout << "Enter delay between samples(microsecs)" << std::endl;
+	std::cin >> sampleDelay;
+	if(sampleDelay < 0)
+	{
+		exit(MY_ERROR);
+	}
+	std::cout << std::endl;
+
+	autoMode_AD7992(sampleDelay);
+	//commandMode_AD7992(sampleDelay);
 	return SUCCESS;
 }
 
 
-int commandModeTwoCh()
+void commandMode_AD7992(int sampleDelay)
 {
-	long sampleCount = 0;
-    BYTE buff[4];
-    int fileDescriptor = 0;
-    UINT writenByteNum = 0;
+	AD9772_Comm ad7992Comm(ADDRESS_AS_GND);
+    if(ad7992Comm.openCommunicatioBus() == MY_ERROR)
+    {
+            std::cout << "Open communication failed" << std::endl;
+    }
+    if(ad7992Comm.initCommunication() == MY_ERROR)
+    {
+        std::cout << "Init communication failed" << std::endl;
+    }
+    
+    if(ad7992Comm.setControlRegister(CONFIGURATION_REG, CONF_REG_VAL_HEX) 
+                                                              == MY_ERROR)
+    {
+        std::cout << "Setting configutation register failed" << std::endl;
+    }
+    if(ad7992Comm.setCommandMode(COMMAND_BOTH_CH) == MY_ERROR)
+    {
+        std::cout << "Setting command mode failed" << std::endl;
+    } 
 
     /*
-    * Get comminication descriptor to I2C device
-    * from linux.
+    * Sampling loop.
     */
-	char I2C_Device_Name[40] = "/dev/i2c-1";
-	fileDescriptor = open(I2C_Device_Name, O_RDWR);
-	if(fileDescriptor < 0)
-	{
-		print_error("open() failed\n");
-		return MY_ERROR;
-	}
-
-    if(ioctl(fileDescriptor, I2C_SLAVE, ADDRESS_AS_GND) < 0)
-	{
-		print_error("ioctl() failed. Failed to gain bus access\n");
-		return MY_ERROR;
-	}
-
-	/*
-	* Configure the AD7992 device.
-	*/
-    BYTE bytesToWrite = 2;
-    buff[0] = CONFIGURATION_REG;
-    buff[1] = CONF_REG_VAL_HEX;
-	if(bytesToWrite < 1)
-	{
-		return SUCCESS;
-	}
-	writenByteNum = write(fileDescriptor, buff, bytesToWrite);	
-	if(writenByteNum < 1)
-	{
-		print_error("write failed\n");
-		return MY_ERROR;
-	}
-
-
-    WCHAR conVal = 0;
-    BYTE chanel = 0;
-    UINT bytesReaded = 0;
-
-    /*
-    * Save the start time of the sampling.
-    */
-    std::chrono::steady_clock::time_point start = 
-                                       std::chrono::steady_clock::now();
     while(1)
     {	
-    	/*
-    	* Ask the device to sample chanel 1 
-    	* and read the sample.
-    	*/
-	    bytesToWrite = 1;
-	    buff[0] = 0x10;
-	    writenByteNum = write(fileDescriptor, buff, bytesToWrite);	
-		if(writenByteNum < 1)
-		{
-			print_error("write failed\n");
-			return MY_ERROR;
-		}
+        WCHAR ch1Val, ch2Val;
 
-		bytesReaded = read(fileDescriptor, buff, 2);
-		if(bytesReaded < 1)
-		{
-			print_error("failed to read\n");
-			return MY_ERROR;
-		}
-		conVal = buff[1] + (buff[0] & 0x0f) * 256;
-        chanel = (16 & buff[0]) % 15;   
-        print_debug(conVal, chanel);
-
-        /*
-    	* Ask the device to sample chanel 2
-    	* and read the sample.
-    	*/
-        bytesToWrite = 1;
-	    buff[0] = 0x20;
-	    writenByteNum = write(fileDescriptor, buff, bytesToWrite);	
-		if(writenByteNum < 1)
-		{
-			print_error("write failed\n");
-			return MY_ERROR;
-		}
-
-		bytesReaded = read(fileDescriptor, buff, 2);
-		if(bytesReaded < 1)
-		{
-			print_error("failed to read\n");
-			return MY_ERROR;
-		}
-		conVal = buff[1] + (buff[0] & 0x0f) * 256;
-        chanel = (16 & buff[0]) % 15;
-        print_debug(conVal, chanel);
-
-        sampleCount++;
-        std::chrono::steady_clock::time_point end = 
-                                              std::chrono::steady_clock::now();
-
-         long microsecsPassed = 
-              std::chrono::duration_cast<std::chrono::microseconds>
-                                                         (end - start).count();
-
-        if(microsecsPassed >= 1000000) 
-        	break;
-        
+	    if(ad7992Comm.readCommandMode(ch1Val, ch2Val, ADDRESS_AS_GND) 
+                                                            == MY_ERROR)
+        {
+            continue;
+        }
+        else
+        {
+            print_debug(ch1Val, 0);
+            print_debug(ch2Val, 1);
+        }
+        delay(sampleDelay);
     }
-    std::cout << "Took " << sampleCount << " samples from each chanel" 
-                                           << std::endl;
-    return SUCCESS;
+    return;
 }
 
 
 
-/****************************** End of file ******************************/
+void autoMode_AD7992(int sampleDelay)
+{
+
+	AD9772_Comm ad7992Comm(ADDRESS_AS_GND);
+    if(ad7992Comm.openCommunicatioBus() == MY_ERROR)
+    {
+        print_error("Open communication failed\n");
+    }
+    if(ad7992Comm.initCommunication() == MY_ERROR)
+    {
+        print_error("Init communication failed\n")
+    }
+    
+    if(ad7992Comm.setControlRegister(CONFIGURATION_REG, CONF_REG_VAL_HEX) 
+                                                              == MY_ERROR)
+    {
+        print_error("Setting configutation register failed\n");
+    }
+    /*
+    * Start the auto sampling mode
+    * by setting the sample rating 
+    * interval.
+    */
+    if(ad7992Comm.setAutoSampleMode(Tx32) == MY_ERROR)
+    {
+        print_error("Set auto mode failed\n");
+    }
+
+    if(ad7992Comm.setAddrRegister(CONVERTION_RESULT_REG) == MY_ERROR)
+    {
+        print_error("Setting addres register failed\n");
+    }
+    
+    WCHAR ch1Val, ch2Val;
+    while(1)
+    {
+        if(ad7992Comm.readAutoMode(ch1Val, ch2Val, ADDRESS_AS_GND) == MY_ERROR)
+        {
+            continue;
+        }
+        else
+        {
+            print_debug(ch1Val, 0);
+            print_debug(ch2Val, 1);
+        }
+		delay(sampleDelay);
+	}
+    return;
+}
+
+
+/**************************** End of file ****************************/
