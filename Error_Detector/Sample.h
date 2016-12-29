@@ -47,3 +47,8 @@ public:
 		return _sampleTime;
 	}
 };
+
+
+typedef Sample* PSample;
+
+/******************** End of file **********************/

@@ -11,18 +11,14 @@
 
 #include "errorDetector.h"
 
-//Queues for samples to be processed.
-ThreadSafeQueue<WCHAR> gSampleQueueX;
-ThreadSafeQueue<WCHAR> gSampleQueueY;
+//Queue for samples to be processed.
+ThreadSafeQueue<PSample> gSampleQueue;
 
 //Queue for samples to be printed to text file.
 ThreadSafeQueue<std::string> gRawDataForFileWriting;
 
 //Conter of the number of samples that were made.
 long sampleCount = 0;
-
-long gSampleCountX = 0;
-long gSampleCountY = 0;
 
 //Flag that is turned on when we get termination command.
 TerminateFlag gTerminateFlag;
@@ -72,7 +68,7 @@ void autoSamplingMode()
     WCHAR ch1Val, ch2Val;
     while(TERMINATION_FLAG == false)
     {
-         std::chrono::steady_clock::time_point timeSampleTaken = std::chrono::steady_clock::now();
+         //std::chrono::steady_clock::time_point timeSampleTaken = std::chrono::steady_clock::now();
 
         if(ad7992Comm.readAutoMode(ch1Val, ch2Val, ADDRESS_AS_GND) == MY_ERROR)
         {
@@ -92,54 +88,6 @@ void autoSamplingMode()
     return;
 }
 
-
-void commandModeOneChan(int chanelToSample)
-{
-    BYTE buff[5];
-    
-    AD9772_Comm ad7992Comm(ADDRESS_AS_GND);
-    if(ad7992Comm.openCommunicatioBus() == MY_ERROR)
-    {
-            std::cout << "Open communication failed" << std::endl;
-    }
-    if(ad7992Comm.initCommunication() == MY_ERROR)
-    {
-        std::cout << "Init communication failed" << std::endl;
-    }
-    
-    if(ad7992Comm.setControlRegister(CONFIGURATION_REG, CONF_REG_VAL_HEX) 
-                                                              == MY_ERROR)
-    {
-        std::cout << "Setting configutation register failed" << std::endl;
-    }
-    if(ad7992Comm.setCommandMode(chanelToSample) == MY_ERROR)
-    {
-        std::cout << "Setting command mode failed" << std::endl;
-    } 
-
-    WCHAR conVal = 0;
-    BYTE chanel = 0;
-    while(TERMINATION_FLAG == false)
-    {
-        if(ad7992Comm.setCommandMode(chanelToSample) == MY_ERROR)
-        {
-            std::cout << "Setting command mode failed" << std::endl;
-        } 
-        if(ad7992Comm.readRegister(buff, 2) == MY_ERROR)
-        {
-            std::cout << "read failed" << std::endl;
-        }
-        conVal = buff[1] + (buff[0] & 0x0f) * 256;
-        chanel = (16 & buff[0]) % 15;
-        print_debug(conVal, chanel);
-
-	gSampleCountX++;
-	std::string sampleStr = std::to_string(conVal) + " " +
-                                std::to_string(0);
-        gRawDataForFileWriting.push(sampleStr);
-    }
-    return;
-}
 
 void commandModeTwoChan()
 {
@@ -178,111 +126,27 @@ void commandModeTwoChan()
        
 	    timeSampleTaken = std::chrono::steady_clock::now();
 
-	    if(ad7992Comm.readCommandMode(ch1Val, ch2Val, ADDRESS_AS_GND) == MY_ERROR)
+	    if(ad7992Comm.readCommandMode(ch1Val, ch2Val, ADDRESS_AS_GND) 
+                                                            == MY_ERROR)
         {
             continue;
         }
         else
         {
             sampleCount++;
+
             print_debug(ch1Val, 0);
             print_debug(ch2Val, 1);
+
+            PSample newSample = new Sample(ch1Val, ch2Val, 
+                                                   timeSampleTaken);
+            gSampleQueue.push(newSample);
+            
+            //Save the sample as string to be written to text file.
+	        std::string sampleStr = std::to_string(ch1Val) + 
+                                   " " + std::to_string(ch2Val);
+            gRawDataForFileWriting.push(sampleStr);
         }
-
-	    std::string sampleStr = std::to_string(ch1Val) + 
-                                " " + std::to_string(ch2Val);
-        gRawDataForFileWriting.push(sampleStr);
-        
-    }
-    return;
-}
-
-
-
-void commandModeTwoChanV2()
-{
-    BYTE buff[4];
-    WCHAR conValX = 0;
-    WCHAR conValY = 0;
-    BYTE chanel = 0;
-
-    
-    AD9772_Comm ad7992Comm(ADDRESS_AS_GND);
-    if(ad7992Comm.openCommunicatioBus() == MY_ERROR)
-    {
-            std::cout << "Open communication failed" << std::endl;
-    }
-    if(ad7992Comm.initCommunication() == MY_ERROR)
-    {
-        std::cout << "Init communication failed" << std::endl;
-    }
-    
-    if(ad7992Comm.setControlRegister(CONFIGURATION_REG, CONF_REG_VAL_HEX) 
-                                                              == MY_ERROR)
-    {
-        std::cout << "Setting configutation register failed" << std::endl;
-    }
-    if(ad7992Comm.setCommandMode(COMMAND_BOTH_CH) == MY_ERROR)
-    {
-        std::cout << "Setting command mode failed" << std::endl;
-    } 
-
-    /*
-    * Time points that used to calculate the time
-    * between samples.
-    */
-    std::chrono::steady_clock::time_point timeSampleTakenX;
-    std::chrono::steady_clock::time_point timeSampleTakenY;
-
-    int desc = ad7992Comm.getDesc();
-
-    /*
-    * Sampling loop.
-    */
-    while(TERMINATION_FLAG == false)
-    {   
-
-        struct i2c_rdwr_ioctl_data ioctlMsg;
-        struct i2c_msg msg [2];
-        
-        BYTE writeBuf[1];
-        BYTE readBuf [4];
-        
-        writeBuf[0] = 0x30;
-        
-        //msg[0].addr = DEV_ADDR;
-        msg [0].flags = 0; //write
-        msg [0].len = 1;
-        msg [0].buf = writeBuf;
-        
-        //msg[1].addr = DEV_ADDR;
-        msg [1].flags = 1; //?read?
-        msg [1].len = 4;
-        msg [1].buf = readBuf;
-        
-        ioctlMsg.msgs = msg;
-        ioctlMsg.nmsgs = 2;
-        
-        if(ioctl(desc,  I2C_RDWR, &ioctlMsg) < 0)
-        {
-          std::cout << "ioctl failed" << std::endl;
-        }
-        timeSampleTakenX = std::chrono::steady_clock::now();
-
-
-        
-        conValX = buff[1] + (buff[0] & 0x0f) * 256;
-        chanel = (16 & buff[0]) % 15;
-        print_debug(conValX, chanel);
-
-
-        conValX = buff[3] + (buff[2] & 0x0f) * 256;
-        chanel = (16 & buff[2]) % 15;
-        print_debug(conValX, chanel);
-
-        std::string sampleStr = std::to_string(conValX) + " " +
-                                std::to_string(conValY);
-        gRawDataForFileWriting.push(sampleStr);
         
     }
     return;
@@ -292,15 +156,13 @@ void commandModeTwoChanV2()
 
 /*
 * Function that used in the thread that manages the
-* interface with AD9772 device.
+* communication with AD9772 device.
 *
 */
 void AD9772_Manager()
 {
-    autoSamplingMode();
-    //commandModeOneChan(COMMAND_CH_1);
-    //commandModeTwoChan();
-    //commandModeTwoChanV2();
+    //autoSamplingMode();
+    commandModeTwoChan();
 
     std::cout << "AD9772_Manager Done." << std::endl;
     return;
@@ -313,24 +175,21 @@ void AD9772_Manager()
 */
 void dataProcessor()
 {
-    bool popRetValX;
-    bool popRetValY;
+    int popRetVal;
+
     while((TERMINATION_FLAG == false) or\
-          (gSampleQueueX.empty() == false))
+          (gSampleQueue.empty() == false))
     {
-        WCHAR popedValX;
-        WCHAR popedValY;
+        PSample popedSample;
         if(TERMINATION_FLAG == true)
         {
-            popRetValX = gSampleQueueX.tryToPop(popedValX);
-            popRetValY = gSampleQueueY.tryToPop(popedValY);
-            if ((popRetValX == false) && (popRetValY == false))
+            popRetVal = gSampleQueue.tryToPop(popedSample);
+            if (popRetVal == false)
                 continue; 
         }        
         else
         {
-            gSampleQueueX.waitAndPop(popedValX);
-            gSampleQueueY.waitAndPop(popedValY);
+            gSampleQueue.waitAndPop(popedSample);
             /*
             * DO CALCULATION ON DATA HERE.
             */
@@ -398,8 +257,7 @@ void terminateThreads()
     //Set the termination flag to true.
     gTerminateFlag.setFlag();
     //Notify all the CV of the thread safe queues.
-    gSampleQueueX.notifyAll(ZERO_SAMPLE);
-    gSampleQueueY.notifyAll(ZERO_SAMPLE);
+    gSampleQueue.notifyAll(NULL);
 
     gRawDataForFileWriting.notifyAll(ZERO_SAMPLE_STR);
 
@@ -414,8 +272,7 @@ void sigIntHandler(int sigNum)
     std::cout << "\nSignal handler called with signal number: " \
               << sigNum << std::endl;
 
-    std::cout << "Data queueX:" <<gSampleQueueX.size() << std::endl;         
-    std::cout << "Data queueY:" <<gSampleQueueY.size() << std::endl;    
+    std::cout << "Data queue:" <<gSampleQueue.size() << std::endl;        
     terminateThreads();
 
     std::cout<< "File writing queue: "<<gRawDataForFileWriting.size()
@@ -469,7 +326,99 @@ int main()
 
 
 
+///////////////////////////////////////////////////////////////
 
+// void commandModeTwoChanV2()
+// {
+//     BYTE buff[4];
+//     WCHAR conValX = 0;
+//     WCHAR conValY = 0;
+//     BYTE chanel = 0;
+
+    
+//     AD9772_Comm ad7992Comm(ADDRESS_AS_GND);
+//     if(ad7992Comm.openCommunicatioBus() == MY_ERROR)
+//     {
+//             std::cout << "Open communication failed" << std::endl;
+//     }
+//     if(ad7992Comm.initCommunication() == MY_ERROR)
+//     {
+//         std::cout << "Init communication failed" << std::endl;
+//     }
+    
+//     if(ad7992Comm.setControlRegister(CONFIGURATION_REG, CONF_REG_VAL_HEX) 
+//                                                               == MY_ERROR)
+//     {
+//         std::cout << "Setting configutation register failed" << std::endl;
+//     }
+//     if(ad7992Comm.setCommandMode(COMMAND_BOTH_CH) == MY_ERROR)
+//     {
+//         std::cout << "Setting command mode failed" << std::endl;
+//     } 
+
+//     /*
+//     * Time points that used to calculate the time
+//     * between samples.
+//     */
+//     std::chrono::steady_clock::time_point timeSampleTakenX;
+//     std::chrono::steady_clock::time_point timeSampleTakenY;
+
+//     int desc = ad7992Comm.getDesc();
+
+//     /*
+//     * Sampling loop.
+//     */
+//     while(TERMINATION_FLAG == false)
+//     {   
+
+//         struct i2c_rdwr_ioctl_data ioctlMsg;
+//         struct i2c_msg msg [2];
+        
+//         BYTE writeBuf[1];
+//         BYTE readBuf [4];
+        
+//         writeBuf[0] = 0x30;
+        
+//         //msg[0].addr = DEV_ADDR;
+//         msg [0].flags = 0; //write
+//         msg [0].len = 1;
+//         msg [0].buf = writeBuf;
+        
+//         //msg[1].addr = DEV_ADDR;
+//         msg [1].flags = 1; //?read?
+//         msg [1].len = 4;
+//         msg [1].buf = readBuf;
+        
+//         ioctlMsg.msgs = msg;
+//         ioctlMsg.nmsgs = 2;
+        
+//         if(ioctl(desc,  I2C_RDWR, &ioctlMsg) < 0)
+//         {
+//           std::cout << "ioctl failed" << std::endl;
+//         }
+//         timeSampleTakenX = std::chrono::steady_clock::now();
+
+
+        
+//         conValX = buff[1] + (buff[0] & 0x0f) * 256;
+//         chanel = (16 & buff[0]) % 15;
+//         print_debug(conValX, chanel);
+
+
+//         conValX = buff[3] + (buff[2] & 0x0f) * 256;
+//         chanel = (16 & buff[2]) % 15;
+//         print_debug(conValX, chanel);
+
+//         std::string sampleStr = std::to_string(conValX) + " " +
+//                                 std::to_string(conValY);
+//         gRawDataForFileWriting.push(sampleStr);
+        
+//     }
+//     return;
+// }
+
+
+/********************** End of file ***************************/
 
 
 

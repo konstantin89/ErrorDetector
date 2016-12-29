@@ -21,6 +21,7 @@
 #include "ThreadSafeQueue.hpp"
 #include "TerminateFlag.hpp"
 #include "../AD9772_Comm_Module/AD9772_Comm.h"
+#include "Sample.h"
 
 
 #include <thread>
