@@ -27,11 +27,7 @@ TerminateFlag gTerminateFlag;
 struct sigaction gSigIntHandler;
 
 
-/*
-* Run automatic sampling mode
-* in AD9772 manager thread.
-*
-*/
+
 void autoSamplingMode()
 {
 
@@ -79,6 +75,10 @@ void autoSamplingMode()
         {
             timeAfterSample = std::chrono::steady_clock::now();
             sampleCount++;
+
+            ch1Val = ch1Val & RESULT_MASK;
+            ch2Val = ch2Val & RESULT_MASK;
+
             print_debug(ch1Val, 0);
             print_debug(ch2Val, 1);
 
@@ -167,27 +167,16 @@ void commandModeTwoChan()
 }
 
 
-
-/*
-* Function that used in the thread that manages the
-* communication with AD9772 device.
-*
-*/
 void AD9772_Manager()
 {
     autoSamplingMode();
     //commandModeTwoChan();
 
-    std::cout << "AD9772_Manager Done." << std::endl;
+    std::cout << "### Thread Done: AD9772_Manager." << std::endl;
     return;
 }
 
-/**
-*
-* Function that used to process samples 
-* readed from AD7992 device.
-*
-*/
+
 void dataProcessor()
 {
     int popRetVal;
@@ -213,7 +202,7 @@ void dataProcessor()
             * when the sample has been taken from 
             * popedSample.
             *
-            *
+            * popedSample is the sample to be processed.
             *
             */
 
@@ -221,17 +210,11 @@ void dataProcessor()
             delete popedSample;
         }
     }
-    std::cout << "dataProcessor Done." << std::endl;
+    std::cout << "### Thread Done: dataProcessor." << std::endl;
     return;
 }
 
-/**
-* Function used for writing samples taken from AD7992
-* to text file.
-*
-* This needed for offline sample processing.
-*
-*/
+
 void dataWriter(const char* fileName)
 {
     std::fstream fs;
@@ -275,14 +258,11 @@ void dataWriter(const char* fileName)
         fs << popedStr << std::endl;
     }
     fs.close();
-    std::cout << "dataWriter Done." << std::endl;
+    std::cout << "### Thread Done: dataWriter." << std::endl;
     return;
 }
 
-/*
-* Function that used to pass termination signal to the threads
-* of the process, and make the threads return safely.
-*/
+
 void terminateThreads()
 {
     //Set the termination flag to true.
@@ -294,10 +274,7 @@ void terminateThreads()
 
 }
 
-/*
-* Function that used as the signal handler
-* for the Ctrl+c termination command.
-*/
+
 void sigIntHandler(int sigNum)
 {
     std::cout << "\nSignal handler called with signal number: " \
@@ -320,10 +297,7 @@ void sigIntHandler(int sigNum)
     exit(0);
 }
 
-/*
-* Set signal handler for Ctrl+c termination
-* signal.
-*/
+
 void setSignalHandler()
 {
     gSigIntHandler.sa_handler = sigIntHandler;
@@ -332,11 +306,37 @@ void setSignalHandler()
     sigaction(SIGINT, &gSigIntHandler, NULL);
 }
 
-/*
-* main()
-*/
+
+void applicationFunc()
+{
+    while(TERMINATION_FLAG == false)
+    {
+        /*
+        *
+        *
+        * Paste application code here
+        *
+        *
+        */
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+    std::cout << "### Thread Done:applicationFunc." << std::endl;
+}
+
 int main()
 {   
+    std::cout << std::endl;
+    std::cout << "#################################" << std::endl;
+    std::cout << "### Welcome to Error Detector ###" << std::endl;
+    std::cout << "#################################" << std::endl;
+    std::cout << std::endl;
+
+    std::cout << "Current app will run for "
+              << std::to_string(TEST_DURATION_SECS) 
+              << " seconds." << std::endl;
+
+    std::cout << "You can terminate app by Ctrl+C."
+              << std::endl;
     
     const char* fileNameX = "./Samples_From_A2D";
 
@@ -345,10 +345,12 @@ int main()
     std::thread AD9772_ManagerThread(AD9772_Manager);
     std::thread dataProcessorThread(dataProcessor);
     std::thread dataWriterThread(dataWriter,fileNameX);
+    std::thread gameAppThread(applicationFunc);
 
     AD9772_ManagerThread.detach();
     dataProcessorThread.detach();
     dataWriterThread.detach();
+    gameAppThread.detach();
 
     std::this_thread::sleep_for(std::chrono::seconds(TEST_DURATION_SECS));
     sigIntHandler(0);

@@ -73,7 +73,7 @@
 /*
 * Time in secs to perform test.
 */
-#define TEST_DURATION_SECS 5
+#define TEST_DURATION_SECS 10
 
 /*
 * Delay between the termination command to return in main().
@@ -97,6 +97,103 @@
 //Do not ommit LSB bits from samples.
 #define RESULT_MASK  0xfff 
 
+
+/****************** Function Declarations *****************/
+
+/**
+* Function that used to run AD7992 in automatic mode.
+*
+* @param: void
+* @return: void
+*/
+void autoSamplingMode();
+
+/**
+* Function that used to run AD7992 in command mode.
+*
+* @param: void
+* @return: void
+*/
+void commandModeTwoChan();
+
+/**
+* Function that used to start the chosed operation mode
+* for AD7992 device.
+*
+* @param: void
+* @return: void
+*/
+void AD9772_Manager();
+
+/**
+*
+* Function that used to process samples taken from 
+* AD7992 device.
+*
+* @param: void
+* @return: void
+*/
+void dataProcessor();
+
+
+/**
+* Function used for writing samples taken from AD7992
+* to text file.
+*
+* This needed for offline sample processing.
+*
+* @param: fileName - Name of the output test file.
+* @return: void
+*/
+void dataWriter(const char* fileName);
+
+
+/**
+* Function that used to set termination signal to 
+* the threads of the process.This is needed for 
+* the threads return safely.
+*
+* @param: void
+* @return: void
+*/
+void terminateThreads();
+
+
+/**
+* Function that used as the signal handler
+* for the Ctrl+c termination command.
+*
+* @param: sigNum - number of the signal used to call function.
+* @return: void
+*/
+void sigIntHandler(int sigNum);
+
+
+/**
+* Set signal handler for Ctrl+c termination
+* signal.
+*
+* @param: void
+* @return: void
+*/
+void setSignalHandler();
+
+
+/**
+* Function that used in the thread that is running the
+* application that uses processes samples from AD7992
+* analog to digital converter device.
+*
+* @param: void
+* @return: void
+*/
+void applicationFunc();
+
+
+/*
+* Entery point of the application.
+*/
+int main();
 
 
 
