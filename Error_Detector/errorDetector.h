@@ -35,27 +35,40 @@
 #include <signal.h>
 #include <string>
 
-// Flag for debugging.
-#define DEBUG 1
 
-// Print samples to standard output for debugging. 
+/************************* For Debug  ************************/
+
+#define DEBUG 0
+
+
 #define print_debug(val, chanel)\
-            do{ if(DEBUG) printf("Value:%d, Chanel:%d\n", val, chanel);} while(0)
+            do{ if(DEBUG) printf("Value:%d, Chanel:%d\n", val, chanel);}\
+                                                                  while(0)
 
-//Print errror to user.
+
 #define print_error(errorText)\
             fprintf(stderr, errorText);
 
 
+/******************* Joystick calibration values ***********/
+
+#define X_MIN 16
+#define X_MID 2056
+#define X_MAX 4095
+
+#define Y_MIN 20
+#define Y_MID 2048
+#define Y_MAX 4095
+
+
+/************************** AD7992  ***********************/
+
 #define ADDRESS_AS_GND 0x23
 
-//#define CONF_REG_VAL_BIN 0b00111000
 #define CONF_REG_VAL_HEX 0x38
 
-/*
-* Check the termination flag status.
-*/
-#define TERMINATION_FLAG gTerminateFlag.checkFlag()
+
+/******************* Time intervals **********************/
 
 /*
 * Time in secs to perform test.
@@ -66,6 +79,14 @@
 * Delay between the termination command to return in main().
 */
 #define FINISH_DELAY_SEC 2
+
+
+/********************** Other ****************************/
+
+/*
+* Check the termination flag status.
+*/
+#define TERMINATION_FLAG gTerminateFlag.checkFlag()
 
 /*
 * Zero sample.
@@ -78,3 +99,6 @@
 
 
 
+
+
+/******************* End Of File *************************/

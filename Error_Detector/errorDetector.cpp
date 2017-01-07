@@ -55,7 +55,7 @@ void autoSamplingMode()
     * by setting the sample rating 
     * interval.
     */
-    if(ad7992Comm.setAutoSampleMode(Tx64) == MY_ERROR)
+    if(ad7992Comm.setAutoSampleMode(Tx32) == MY_ERROR)
     {
         print_error("Set auto mode failed\n");
     }
@@ -66,21 +66,34 @@ void autoSamplingMode()
     }
     
     WCHAR ch1Val, ch2Val;
+    std::chrono::steady_clock::time_point timeBeforeSample;
+    std::chrono::steady_clock::time_point timeAfterSample;
     while(TERMINATION_FLAG == false)
     {
-         //std::chrono::steady_clock::time_point timeSampleTaken = std::chrono::steady_clock::now();
-
+        timeBeforeSample = std::chrono::steady_clock::now();
         if(ad7992Comm.readAutoMode(ch1Val, ch2Val, ADDRESS_AS_GND) == MY_ERROR)
         {
             continue;
         }
         else
         {
+            timeAfterSample = std::chrono::steady_clock::now();
             sampleCount++;
             print_debug(ch1Val, 0);
             print_debug(ch2Val, 1);
-                    std::string sampleStr = std::to_string(ch1Val) + 
-                                " " + std::to_string(ch2Val);
+
+            auto sampleDuration = timeAfterSample - timeBeforeSample;
+            auto microSecs = std::chrono::duration_cast<std::chrono::microseconds>
+                                                           (sampleDuration).count();
+
+            PSample newSample = new Sample(ch1Val, ch2Val, 
+                                           timeBeforeSample);
+            gSampleQueue.push(newSample);
+
+            std::string sampleStr = std::to_string(ch1Val) + 
+                                " " + std::to_string(ch2Val) +
+                                " " + std::to_string(microSecs);
+
             gRawDataForFileWriting.push(sampleStr);
         }
 
@@ -162,16 +175,17 @@ void commandModeTwoChan()
 */
 void AD9772_Manager()
 {
-    //autoSamplingMode();
-    commandModeTwoChan();
+    autoSamplingMode();
+    //commandModeTwoChan();
 
     std::cout << "AD9772_Manager Done." << std::endl;
     return;
 }
 
 /**
-* Function that used in thread that processes the
-* input from AD9772 device.
+*
+* Function that used to process samples 
+* readed from AD7992 device.
 *
 */
 void dataProcessor()
@@ -191,9 +205,20 @@ void dataProcessor()
         else
         {
             gSampleQueue.waitAndPop(popedSample);
+
             /*
-            * DO CALCULATION ON DATA HERE.
+            ************* DO CALCULATION ON DATA HERE *********.
+            *
+            * Read the converted data and the time
+            * when the sample has been taken from 
+            * popedSample.
+            *
+            *
+            *
             */
+
+            //After finishing working with sample, delete it.
+            delete popedSample;
         }
     }
     std::cout << "dataProcessor Done." << std::endl;
@@ -201,8 +226,11 @@ void dataProcessor()
 }
 
 /**
-* Function used for writing samples of GPIO to
-* text file.
+* Function used for writing samples taken from AD7992
+* to text file.
+*
+* This needed for offline sample processing.
+*
 */
 void dataWriter(const char* fileName)
 {
@@ -213,10 +241,12 @@ void dataWriter(const char* fileName)
     {
         fs.open(fileName, std::fstream::out);
 
+        //Write the time of thread start in the head of the samples file.
         std::chrono::time_point<std::chrono::system_clock> nowTime;
         nowTime = std::chrono::system_clock::now();
         std::time_t startTime = \
                     std::chrono::system_clock::to_time_t(nowTime);
+
         fs << "Start time: " << std::ctime(&startTime);
     }
     catch(std::exception& e)
@@ -324,100 +354,6 @@ int main()
     sigIntHandler(0);
     return 0;
 }
-
-
-
-///////////////////////////////////////////////////////////////
-
-// void commandModeTwoChanV2()
-// {
-//     BYTE buff[4];
-//     WCHAR conValX = 0;
-//     WCHAR conValY = 0;
-//     BYTE chanel = 0;
-
-    
-//     AD9772_Comm ad7992Comm(ADDRESS_AS_GND);
-//     if(ad7992Comm.openCommunicatioBus() == MY_ERROR)
-//     {
-//             std::cout << "Open communication failed" << std::endl;
-//     }
-//     if(ad7992Comm.initCommunication() == MY_ERROR)
-//     {
-//         std::cout << "Init communication failed" << std::endl;
-//     }
-    
-//     if(ad7992Comm.setControlRegister(CONFIGURATION_REG, CONF_REG_VAL_HEX) 
-//                                                               == MY_ERROR)
-//     {
-//         std::cout << "Setting configutation register failed" << std::endl;
-//     }
-//     if(ad7992Comm.setCommandMode(COMMAND_BOTH_CH) == MY_ERROR)
-//     {
-//         std::cout << "Setting command mode failed" << std::endl;
-//     } 
-
-//     /*
-//     * Time points that used to calculate the time
-//     * between samples.
-//     */
-//     std::chrono::steady_clock::time_point timeSampleTakenX;
-//     std::chrono::steady_clock::time_point timeSampleTakenY;
-
-//     int desc = ad7992Comm.getDesc();
-
-//     /*
-//     * Sampling loop.
-//     */
-//     while(TERMINATION_FLAG == false)
-//     {   
-
-//         struct i2c_rdwr_ioctl_data ioctlMsg;
-//         struct i2c_msg msg [2];
-        
-//         BYTE writeBuf[1];
-//         BYTE readBuf [4];
-        
-//         writeBuf[0] = 0x30;
-        
-//         //msg[0].addr = DEV_ADDR;
-//         msg [0].flags = 0; //write
-//         msg [0].len = 1;
-//         msg [0].buf = writeBuf;
-        
-//         //msg[1].addr = DEV_ADDR;
-//         msg [1].flags = 1; //?read?
-//         msg [1].len = 4;
-//         msg [1].buf = readBuf;
-        
-//         ioctlMsg.msgs = msg;
-//         ioctlMsg.nmsgs = 2;
-        
-//         if(ioctl(desc,  I2C_RDWR, &ioctlMsg) < 0)
-//         {
-//           std::cout << "ioctl failed" << std::endl;
-//         }
-//         timeSampleTakenX = std::chrono::steady_clock::now();
-
-
-        
-//         conValX = buff[1] + (buff[0] & 0x0f) * 256;
-//         chanel = (16 & buff[0]) % 15;
-//         print_debug(conValX, chanel);
-
-
-//         conValX = buff[3] + (buff[2] & 0x0f) * 256;
-//         chanel = (16 & buff[2]) % 15;
-//         print_debug(conValX, chanel);
-
-//         std::string sampleStr = std::to_string(conValX) + " " +
-//                                 std::to_string(conValY);
-//         gRawDataForFileWriting.push(sampleStr);
-        
-//     }
-//     return;
-// }
-
 
 /********************** End of file ***************************/
 
