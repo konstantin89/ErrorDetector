@@ -74,27 +74,42 @@ void autoSamplingMode()
         else
         {
             timeAfterSample = std::chrono::steady_clock::now();
-            sampleCount++;
-
-            ch1Val = ch1Val & RESULT_MASK;
-            ch2Val = ch2Val & RESULT_MASK;
-
-            print_debug(ch1Val, 0);
-            print_debug(ch2Val, 1);
-
             auto sampleDuration = timeAfterSample - timeBeforeSample;
             auto microSecs = std::chrono::duration_cast<std::chrono::microseconds>
                                                            (sampleDuration).count();
 
-            PSample newSample = new Sample(ch1Val, ch2Val, 
-                                           timeBeforeSample);
-            gSampleQueue.push(newSample);
+            /*
+            * If the sample took too much time, we had contex switch
+            * (thread switch) that makes out time measurments be
+            * inaccurate. In this case we ignore the mesurment.
+            *
+            */
+            if(microSecs > MAX_MEASURMENT_TIME_MICRO)
+            {
+                continue;
+            }
+            else
+            {
+                sampleCount++;
 
-            std::string sampleStr = std::to_string(ch1Val) + 
-                                " " + std::to_string(ch2Val) +
-                                " " + std::to_string(microSecs);
-
-            gRawDataForFileWriting.push(sampleStr);
+                ch1Val = ch1Val & RESULT_MASK;
+                ch2Val = ch2Val & RESULT_MASK;
+    
+                print_debug(ch1Val, 0);
+                print_debug(ch2Val, 1);
+    
+                PSample newSample = new Sample(ch1Val, ch2Val, 
+                                               timeBeforeSample);
+                gSampleQueue.push(newSample);
+    
+                std::string sampleStr = std::to_string(ch1Val) + 
+                                    " " + std::to_string(ch2Val) +
+                                    " " + std::to_string(microSecs);
+    
+                gRawDataForFileWriting.push(sampleStr);
+            }
+    
+            
         }
 
 

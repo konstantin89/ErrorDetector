@@ -80,6 +80,10 @@
 */
 #define FINISH_DELAY_SEC 2
 
+/*
+*
+*/
+#define MAX_MEASURMENT_TIME_MICRO 1000
 
 /********************** Other ****************************/
 
