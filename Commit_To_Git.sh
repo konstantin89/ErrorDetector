@@ -1,3 +1,6 @@
+
+#Script for commiting project to Github.
+
 if [ "$#" -ne 1 ]; then
 	echo "Error: Enter commit description."
 	exit -1
