@@ -3,7 +3,7 @@
 #include "ThreadSafeQueue.hpp"
 #include "TestParameters.h"
 #include <fstream>
-
+#include <iostream>
 
 
 typedef unsigned short WCHAR;
@@ -12,15 +12,17 @@ class LogModule
 {
 private:
 
-	std::vector<std::string> logEntryVector;
+	std::vector<std::string> _logEntryVector;
 
-	std::fstream logFileStram;
+	std::fstream _logFileStram;
+
+	std::string _logFileName;
 
 	/*
 	*Coordinates of the rectangle on the screen.
 	*/
-	int rectXpos = 0;
-	int rectYpos = 0;
+	int _rectXpos = 0;
+	int _rectYpos = 0;
 
 public:
 
@@ -65,7 +67,7 @@ public:
 	*
 	*
 	*/
-	int createLogFileTitle(TestParameters testParams)
+	void createLogFileTitle(TestParameters testParams)
 
 
 
