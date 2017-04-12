@@ -6,13 +6,15 @@
 #include <iostream>
 
 
+#define EVENT_PREFIX "EVENT:"
+
 typedef unsigned short WCHAR;
 
 class LogModule
 {
 private:
 
-	std::vector<std::string> _logEntryVector;
+	ThreadSafeQueue<std::string> _logQueue;
 
 	std::fstream _logFileStram;
 
@@ -48,14 +50,20 @@ public:
 	*
 	*
 	*/
-	void printLogEnteryToFile();
+	bool tryToPop();
+
+	/**
+	*
+	*
+	*/
+	void waitAndPop();
 
 
 	/**
 	*
 	*
 	*/
-	std::string createLogString(WCHAR, jPosX, WCHAR jPosY, long sampleDuration);
+	std::string createLogString(WCHAR jPosX, WCHAR jPosY, long sampleDuration);
 
 	/**
 	*
@@ -67,9 +75,12 @@ public:
 	*
 	*
 	*/
-	void createLogFileTitle(TestParameters testParams)
+	void createLogFileTitle(TestParameters& testParams);
 
-
-
+	/**
+	*
+	*
+	*/
+	int writeStrToFile(std::string strToWrite);
 
 };

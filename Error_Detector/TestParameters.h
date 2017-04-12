@@ -9,11 +9,13 @@
 *
 **********************************************************/
 
+
 #include <fstream>
 #include <iostream>
 #include <string>
 
 
+/*************** Defines for return values **************/
 #ifndef SUCCESS
 #define SUCCESS 0
 #endif
@@ -23,22 +25,26 @@
 #endif
 
 
-const std::string DEFAULT_NAME("Default Name");
+/**************** Default Values Defines ****************/
+#define DEFAULT_NAME "Default Name"
 #define DEFAULT_SPEED 1
 #define DEFAULT_DIRECTION_CHANGE 0
 #define DEFAULT_SPEED_CHANGE 0
 #define DEFAULT_RECT_PATTERN_ID 0
+#define DEFAULT_RECT_SIZE 50
 
-#define NUMBER_OF_PARAMETERS 5
+#define NUMBER_OF_PARAMETERS 6
+
 
 class TestParameters
 {
 public:
-	std::string playerName(DEFAULT_NAME);
+	std::string playerName = std::string(DEFAULT_NAME);
 	int rectSpeed =        DEFAULT_SPEED;
 	int seedChange =       DEFAULT_SPEED_CHANGE;
 	int directionChange =  DEFAULT_DIRECTION_CHANGE;
 	int rectPatternId =    DEFAULT_RECT_PATTERN_ID;
+	int rectSize =         DEFAULT_RECT_SIZE;
 
 	/**
 	* Constructor.
@@ -46,7 +52,7 @@ public:
 	*/
 	TestParameters(char* parameterFileName)
 	{
-		readParametersFromFile(parameterFileName);
+		readParamsFromFile(parameterFileName);
 	}
 
 
@@ -58,15 +64,20 @@ public:
 					int         paramPRectSpeed,
 					int         paramSpeedChange,
 					int         paramDirectionChange,
-					int         paramEectPatternId):
-					(playerName, 
-					 rectSpeed,
-					 seedChange, 
-				     directionChange,
-				     rectPatternId)
-					{
-						/* EMPTY */
-					}
+					int         paramEectPatternId,
+					int         paramRectSize)
+	{
+		playerName = paramPlayerName;
+		rectSpeed = paramPRectSpeed;
+		seedChange = paramSpeedChange;
+		directionChange = paramDirectionChange;
+		rectPatternId = paramEectPatternId;
+		rectSize = paramRectSize;
+	}
+				
+					
+
+					
 
 
 	/**
@@ -97,6 +108,7 @@ public:
 			seedChange =      std::stoi(parameterArr[2]);
 			directionChange = std::stoi(parameterArr[3]);
 			rectPatternId =   std::stoi(parameterArr[4]);
+			rectSize =        std::stoi(parameterArr[5]);
 
 			return SUCCESS;
 		}
@@ -114,6 +126,7 @@ public:
 		parameterArr[2] = std::to_string(seedChange);
 		parameterArr[3] = std::to_string(directionChange);
 		parameterArr[4] = std::to_string(rectPatternId);
+		parameterArr[5] = std::to_string(rectSize);
 
 		std::ofstream paramFile;
 		paramFile.open(parameterFileName, std::ofstream::out);
@@ -128,6 +141,7 @@ public:
 		paramFile << parameterArr[2] << std::endl;
 		paramFile << parameterArr[3] << std::endl;
 		paramFile << parameterArr[4] << std::endl;
+		paramFile << parameterArr[5] << std::endl;
 
 		paramFile.close();
 		return SUCCESS;

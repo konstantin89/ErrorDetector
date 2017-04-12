@@ -21,13 +21,16 @@ all: $(AD9772_MAIN) $(ERROR_DETECTOR_MAIN)
 
 
 $(ERROR_DETECTOR_MAIN): $(OBJDIR)A2D_Comm_I2C.o $(OBJDIR)AD9772_Comm.o $(OBJDIR)errorDetector.o\
-		        $(ERR_DET_DIR)Sample.h
+		        $(OBJDIR)LogModule.o $(ERR_DET_DIR)Sample.h
 	$(CXX) $(CXX_FLAGS) $^ -o $@
 
 $(AD9772_MAIN): $(OBJDIR)A2D_Comm_I2C.o $(OBJDIR)AD9772_Comm.o  $(AD7992_DIR)AD9772_Comm_Main.cpp
 	$(CXX) $(CXX_FLAGS) $^ -o $@
 
 $(OBJDIR)errorDetector.o: $(ERR_DET_DIR)errorDetector.cpp $(ERR_DET_DIR)errorDetector.h
+	$(CXX) $(CXX_FLAGS) -c $< -o $@
+
+$(OBJDIR)LogModule.o: $(ERR_DET_DIR)LogModule.cpp $(ERR_DET_DIR)LogModule.h
 	$(CXX) $(CXX_FLAGS) -c $< -o $@
 
 $(OBJDIR)AD9772_Comm.o: $(AD7992_DIR)AD9772_Comm.cpp $(AD7992_DIR)AD9772_Comm.h 
