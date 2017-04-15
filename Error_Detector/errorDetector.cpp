@@ -27,6 +27,10 @@ TerminateFlag gTerminateFlag;
 struct sigaction gSigIntHandler;
 
 
+TestParameters g_testParams;
+
+LogModule g_logModule(LOG_FILE_NAME_STR.c_str());
+
 
 void autoSamplingMode()
 {
@@ -101,12 +105,13 @@ void autoSamplingMode()
                 PSample newSample = new Sample(ch1Val, ch2Val, 
                                                timeBeforeSample);
                 gSampleQueue.push(newSample);
-    
-                std::string sampleStr = std::to_string(ch1Val) + 
-                                    " " + std::to_string(ch2Val) +
-                                    " " + std::to_string(microSecs);
-    
-                gRawDataForFileWriting.push(sampleStr);
+                
+                std::string logEntery = g_logModule.createLogString(ch1Val,
+                                                               ch2Val, 
+                                                               microSecs);
+
+                g_logModule.pushLogEntery(logEntery);
+                //gRawDataForFileWriting.push(sampleStr);
             }
     
             
@@ -230,49 +235,16 @@ void dataProcessor()
 }
 
 
-void dataWriter(const char* fileName)
+void dataWriter()
 {
-    std::fstream fs;
-    std::string popedStr;
-    bool popRetVal;
-    try
+    while(TERMINATION_FLAG == false)
     {
-        fs.open(fileName, std::fstream::out);
-
-        //Write the time of thread start in the head of the samples file.
-        std::chrono::time_point<std::chrono::system_clock> nowTime;
-        nowTime = std::chrono::system_clock::now();
-        std::time_t startTime = \
-                    std::chrono::system_clock::to_time_t(nowTime);
-
-        fs << "Start time: " << std::ctime(&startTime);
-    }
-    catch(std::exception& e)
-    {
-        std::cout << "Exception in dataWriter: " << e.what();
-        if(fs)
+        while(g_logModule.tryToPop())
         {
-            fs.close();
+            /* EMPTY */
         }
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
-    while((TERMINATION_FLAG == false) or\
-          (gRawDataForFileWriting.empty() == false))
-
-    {
-        if(TERMINATION_FLAG == true)
-        {
-            popRetVal = gRawDataForFileWriting.tryToPop(popedStr);
-            if(popRetVal == false)
-                continue;
-        }
-        else
-        {
-            gRawDataForFileWriting.waitAndPop(popedStr);
-        }
-        
-        fs << popedStr << std::endl;
-    }
-    fs.close();
     std::cout << "### Thread Done: dataWriter." << std::endl;
     return;
 }
@@ -345,6 +317,8 @@ int main()
     std::cout << "### Welcome to Error Detector ###" << std::endl;
     std::cout << "#################################" << std::endl;
     std::cout << std::endl;
+    
+    g_logModule.createLogFileTitle(g_testParams);
 
     std::cout << "Current app will run for "
               << std::to_string(TEST_DURATION_SECS) 
@@ -352,14 +326,12 @@ int main()
 
     std::cout << "You can terminate app by Ctrl+C."
               << std::endl;
-    
-    const char* fileNameX = "./Samples_From_A2D";
 
     setSignalHandler();
 
     std::thread AD9772_ManagerThread(AD9772_Manager);
     std::thread dataProcessorThread(dataProcessor);
-    std::thread dataWriterThread(dataWriter,fileNameX);
+    std::thread dataWriterThread(dataWriter);
     std::thread gameAppThread(applicationFunc);
 
     AD9772_ManagerThread.detach();

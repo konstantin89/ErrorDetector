@@ -6,6 +6,7 @@ if [ "$#" -ne 1 ]; then
 	exit -1
 fi
 
+make clean
 
 git add "."
 git commit -m "$1"

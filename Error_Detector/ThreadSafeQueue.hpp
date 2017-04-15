@@ -10,6 +10,9 @@
 *
 **************************************************/
 
+#ifndef _THREAD_SAFE_QUEUE_H
+#define _THREAD_SAFE_QUEUE_H
+
 #include <queue>
 #include <mutex>
 #include <condition_variable>
@@ -138,7 +141,9 @@ public:
 };
 
 
+#endif
 
+/*********************** End Of File ************************/
 
 
 

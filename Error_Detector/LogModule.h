@@ -32,7 +32,7 @@ public:
 	*
 	*
 	*/
-	LogModule(char* logFileName);
+	LogModule(const char* logFileName);
 
 	/**
 	*
@@ -69,7 +69,13 @@ public:
 	*
 	*
 	*/
-	void logEvent(std::string eventDiscription);
+	void pushLogEvent(std::string eventDiscription);
+
+	/**
+	*
+	*
+	*/
+	void pushLogEntery(std::string eventDiscription);
 
 	/**
 	*

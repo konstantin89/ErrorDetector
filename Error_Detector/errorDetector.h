@@ -22,6 +22,8 @@
 #include "TerminateFlag.hpp"
 #include "../AD9772_Comm_Module/AD9772_Comm.h"
 #include "Sample.h"
+#include "LogModule.h"
+#include "TestParameters.h"
 
 
 #include <thread>
@@ -102,6 +104,9 @@
 #define RESULT_MASK  0xfff 
 
 
+std::string LOG_FILE_NAME_STR("./LogFile");
+
+
 /****************** Function Declarations *****************/
 
 /**
@@ -146,10 +151,10 @@ void dataProcessor();
 *
 * This needed for offline sample processing.
 *
-* @param: fileName - Name of the output test file.
+* @param: void
 * @return: void
 */
-void dataWriter(const char* fileName);
+void dataWriter();
 
 
 /**

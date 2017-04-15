@@ -2,7 +2,7 @@
 #include "LogModule.h"
 
 
-LogModule::LogModule(char* logFileName)
+LogModule::LogModule(const char* logFileName)
 {
 	_logFileName = std::string(logFileName);
 
@@ -32,8 +32,8 @@ void LogModule::createLogFileTitle(TestParameters& testParams)
 	nowTime = std::chrono::system_clock::now();
     auto startTime = std::chrono::system_clock::to_time_t(nowTime);
 
-	_logFileStram << "************** Error Detector Log  Header  **************" << std::endl;
-    _logFileStram << "Start time:               " << std::ctime(&startTime) << std::endl;
+	_logFileStram << "************** Error Detector Log Header ****************" << std::endl;
+    _logFileStram << "Start time:               " << std::ctime(&startTime);
 	_logFileStram << "Player Name:              " << testParams.playerName << std::endl;
 	_logFileStram << "Rectangle speed:          " << testParams.rectSpeed << std::endl;
 	_logFileStram << "Speed change enabled:     " << testParams.seedChange << std::endl;
@@ -44,10 +44,16 @@ void LogModule::createLogFileTitle(TestParameters& testParams)
 }
 
 
-void LogModule::logEvent(std::string eventDiscription)
+void LogModule::pushLogEvent(std::string eventDiscription)
 {
 	_logQueue.push(EVENT_PREFIX + eventDiscription);
 }
+
+void LogModule::pushLogEntery(std::string eventDiscription)
+{
+	_logQueue.push(eventDiscription);
+}
+
 
 
 bool LogModule::tryToPop()
@@ -70,6 +76,7 @@ void LogModule::waitAndPop()
 {
 	std::string logEntery;
 	_logQueue.waitAndPop(logEntery);
+	writeStrToFile(logEntery);
 }
 
 
@@ -79,7 +86,7 @@ std::string LogModule::createLogString(WCHAR jPosX,
 {
 	std::string logEntery;
 	logEntery = std::to_string(jPosX) + " " + std::to_string(jPosY);
-	logEntery += std::to_string(sampleDuration) + " ";
+	logEntery +=  " " + std::to_string(sampleDuration) + " ";
 	logEntery += std::to_string(_rectXpos) + " " + std::to_string(_rectYpos);
 	logEntery += std::string("\n");
 

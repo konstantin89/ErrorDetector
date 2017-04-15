@@ -9,6 +9,8 @@
 *
 **********************************************************/
 
+#ifndef _TEST_PARAMETERS_H
+#define _TEST_PARAMETERS_H
 
 #include <fstream>
 #include <iostream>
@@ -45,6 +47,14 @@ public:
 	int directionChange =  DEFAULT_DIRECTION_CHANGE;
 	int rectPatternId =    DEFAULT_RECT_PATTERN_ID;
 	int rectSize =         DEFAULT_RECT_SIZE;
+
+	/**
+	* Default constructor.
+	*/
+	TestParameters()
+	{
+		/* EMPTY */
+	}
 
 	/**
 	* Constructor.
@@ -150,5 +160,6 @@ public:
 };
 
 
+#endif
 
 /************************* End Of File ****************************/
