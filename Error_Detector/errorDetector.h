@@ -105,6 +105,7 @@
 
 
 std::string LOG_FILE_NAME_STR("./LogFile");
+std::string PARAM_FILE_NAME_STR("./Parameters");
 
 
 /****************** Function Declarations *****************/

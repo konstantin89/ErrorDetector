@@ -1,6 +1,10 @@
-#Push changes to github.
-#git push -u origin master
-
+#######################################################
+#
+# Author: Kosta Bulgakov
+#
+# Brief: Make file for Error detector app.
+#
+#######################################################
 
 
 CXX = g++
@@ -13,7 +17,11 @@ OBJDIR = ./ObjsAndExecs/
 AD7992_DIR = ./AD9772_Comm_Module/
 ERR_DET_DIR = ./Error_Detector/
 
+#Text files created by application.
+PARAM_FILES = ParametersTest Parameters
+LOG_FILES = LogFile LogFileTest
 
+#Commands
 AD9772_MAIN = $(OBJDIR)AD9772_Comm_Main
 ERROR_DETECTOR_MAIN = $(OBJDIR)errorDetector
 LOG_MODULE_TEST_MAIN = $(OBJDIR)logModuleTest
@@ -57,6 +65,9 @@ $(LOG_MODULE_TEST_MAIN): $(ERR_DET_DIR)LogModule.cpp      \
 
 #make clean
 clean:
-	rm -rf $(OBJDIR)* LogFile LogFileTest
+	rm -rf $(OBJDIR)* $(LOG_FILES) $(PARAM_FILES)
 
 
+
+
+######################## End Of File #############################

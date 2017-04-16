@@ -318,6 +318,17 @@ int main()
     std::cout << "#################################" << std::endl;
     std::cout << std::endl;
     
+
+    if(TestParameters::paramFileExists(PARAM_FILE_NAME_STR.c_str()))
+    {
+        g_testParams.readParamsFromFile(PARAM_FILE_NAME_STR.c_str());
+    }
+    else
+    {
+        std::cout << "No Parameter file provided, using default values"
+                  << std::endl;
+    }
+
     g_logModule.createLogFileTitle(g_testParams);
 
     std::cout << "Current app will run for "

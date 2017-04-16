@@ -15,6 +15,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <unistd.h>
 
 
 /*************** Defines for return values **************/
@@ -60,7 +61,7 @@ public:
 	* Constructor.
 	* Reads parameters from file.
 	*/
-	TestParameters(char* parameterFileName)
+	TestParameters(const char* parameterFileName)
 	{
 		readParamsFromFile(parameterFileName);
 	}
@@ -85,16 +86,12 @@ public:
 		rectSize = paramRectSize;
 	}
 				
-					
-
-					
-
 
 	/**
 	* Method that used to read parameters from text file.
 	*
 	*/
-	int readParamsFromFile(char* parameterFileName)
+	int readParamsFromFile(const char* parameterFileName)
 	{
 		std::ifstream paramFile(parameterFileName);
 		if(paramFile.is_open() == false)
@@ -128,15 +125,9 @@ public:
 	* Method that used to write parameters to file.
 	*
 	*/
-	int writeParamsToFile(char* parameterFileName)
+	int writeParamsToFile(const char* parameterFileName)
 	{
-		std::string parameterArr[NUMBER_OF_PARAMETERS];
-		parameterArr[0] = playerName;
-		parameterArr[1] = std::to_string(rectSpeed);
-		parameterArr[2] = std::to_string(seedChange);
-		parameterArr[3] = std::to_string(directionChange);
-		parameterArr[4] = std::to_string(rectPatternId);
-		parameterArr[5] = std::to_string(rectSize);
+		
 
 		std::ofstream paramFile;
 		paramFile.open(parameterFileName, std::ofstream::out);
@@ -146,16 +137,38 @@ public:
 			return MY_ERROR;
 		}
 
-		paramFile << parameterArr[0] << std::endl;
-		paramFile << parameterArr[1] << std::endl;
-		paramFile << parameterArr[2] << std::endl;
-		paramFile << parameterArr[3] << std::endl;
-		paramFile << parameterArr[4] << std::endl;
-		paramFile << parameterArr[5] << std::endl;
+		paramFile << getParamsAsStr();
 
 		paramFile.close();
 		return SUCCESS;
+	}
 
+	static bool paramFileExists(const char* parameterFileName)
+	{
+		if(access(parameterFileName, F_OK) != -1)
+			return true;
+		
+		else
+			return false;
+	}
+
+	std::string getParamsAsStr()
+	{
+		std::string parameterArr[NUMBER_OF_PARAMETERS];
+		parameterArr[0] = playerName;
+		parameterArr[1] = std::to_string(rectSpeed);
+		parameterArr[2] = std::to_string(seedChange);
+		parameterArr[3] = std::to_string(directionChange);
+		parameterArr[4] = std::to_string(rectPatternId);
+		parameterArr[5] = std::to_string(rectSize);
+
+		std::string retStr;
+		for(int i=0; i<NUMBER_OF_PARAMETERS; i++)
+		{
+			retStr += parameterArr[i];
+			retStr += std::string("\n");
+		}
+		return retStr;
 	}
 };
 
