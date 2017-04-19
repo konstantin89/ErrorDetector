@@ -200,10 +200,6 @@ void setSignalHandler();
 void applicationFunc();
 
 
-/*
-* Entery point of the application.
-*/
-int main();
 
 
 

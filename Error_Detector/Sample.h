@@ -10,6 +10,9 @@
 *
 ***********************************************************/
 
+#ifndef _SAMPLE_H
+#define _SAMPLE_H
+
 #include <chrono>
 #include "../AD9772_Comm_Module/AD9772_Comm.h"
 
@@ -50,5 +53,7 @@ public:
 
 
 typedef Sample* PSample;
+
+#endif
 
 /******************** End of file **********************/
